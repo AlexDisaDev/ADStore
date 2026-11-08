@@ -47,4 +47,4 @@ Cliente paga → te llega el pedido en Stripe → lo compras al proveedor (CJ, A
 ## Antes de vender
 - Rellena `legal.html` con tus datos (Stripe y la ley lo piden).
 - En España, vender de forma habitual requiere darte de alta como autónomo.
-- Usa proveedores con almacén en la UE si puedes: plazos de 5-9 días y menos devoluciones.
+- Usa proveedores con almacén en la UE si puedes: plazos de 8-15 días y menos devoluciones.
