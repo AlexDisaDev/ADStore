@@ -26,6 +26,8 @@ module.exports = async (req, res) => {
       shipping_address_collection: { allowed_countries: config.shippingCountries },
       phone_number_collection: { enabled: true },
       allow_promotion_codes: true,
+      customer_creation: "always",
+      payment_intent_data: { description: `${product.name} x${qty}`, metadata: { productId: product.id, quantity: String(qty) } },
       metadata: { productId: product.id, quantity: String(qty) },
       success_url: `${origin}/gracias.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/?cancelado=1`
