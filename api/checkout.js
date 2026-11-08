@@ -7,7 +7,7 @@ module.exports = async (req, res) => {
 
   const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
   const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
-  const product = config.products.find(p => p.id === body.productId);
+  const product = config.products.find(p => p.id === body.productId && p.active !== false);
   const qty = Math.min(Math.max(parseInt(body.quantity, 10) || 1, 1), 10);
   if (!product) return res.status(400).json({ error: "Producto no encontrado" });
   let variant = null;
