@@ -25,7 +25,7 @@ module.exports = async (req, res) => {
   if (event.type === "checkout.session.completed") {
     const s = event.data.object;
     console.log("NUEVO PEDIDO", JSON.stringify({
-      producto: s.metadata.productId, color: s.metadata.variant, cantidad: s.metadata.quantity,
+      producto: s.metadata.productId, color: s.metadata.variant, talla: s.metadata.size, cantidad: s.metadata.quantity,
       total: s.amount_total / 100, email: s.customer_details?.email,
       nombre: s.collected_information?.shipping_details?.name || s.shipping_details?.name,
       direccion: s.collected_information?.shipping_details?.address || s.shipping_details?.address,

@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/farolillos", "destination": "/index.html" },
+    { "source": "/bodyfaja", "destination": "/index.html" }
+  ]
+}

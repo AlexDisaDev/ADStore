@@ -15,7 +15,12 @@ module.exports = async (req, res) => {
     variant = product.variants.find(v => v.id === body.variantId);
     if (!variant) return res.status(400).json({ error: "Elige un color" });
   }
-  const name = variant ? `${product.name} - ${variant.name}` : product.name;
+  let size = null;
+  if (product.sizes && product.sizes.length) {
+    size = product.sizes.find(x => x === body.size);
+    if (!size) return res.status(400).json({ error: "Elige una talla" });
+  }
+  const name = [product.name, variant && variant.name, size && `Talla ${size}`].filter(Boolean).join(" - ");
   const price = (variant && variant.price) || product.price;
   const images = (variant && variant.image) ? [variant.image] : product.images;
 
@@ -35,10 +40,10 @@ module.exports = async (req, res) => {
       phone_number_collection: { enabled: true },
       allow_promotion_codes: true,
       customer_creation: "always",
-      payment_intent_data: { description: `${name} x${qty}`, metadata: { productId: product.id, variant: variant ? variant.id : "", quantity: String(qty) } },
-      metadata: { productId: product.id, variant: variant ? variant.id : "", quantity: String(qty) },
+      payment_intent_data: { description: `${name} x${qty}`, metadata: { productId: product.id, variant: variant ? variant.id : "", size: size || "", quantity: String(qty) } },
+      metadata: { productId: product.id, variant: variant ? variant.id : "", size: size || "", quantity: String(qty) },
       success_url: `${origin}/gracias.html?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/?cancelado=1`
+      cancel_url: `${origin}/${product.id}?cancelado=1`
     });
     res.status(200).json({ url: session.url });
   } catch (e) {

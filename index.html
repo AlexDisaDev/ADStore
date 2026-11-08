@@ -6,6 +6,7 @@
 <title>Tienda</title>
 <meta name="description" content="Envío gratis. Pago seguro con Stripe.">
 <link rel="stylesheet" href="/styles.css">
+<base href="/">
 </head>
 <body>
 <div class="bar" id="bar">Envío gratis</div>
@@ -27,8 +28,11 @@ fetch("/api/products").then(r => r.json()).then(cfg => {
   document.title = cfg.storeName;
   document.getElementById("logo").textContent = cfg.storeName;
   document.getElementById("bar").textContent = cfg.freeShippingText;
-  // ?p=producto-2 muestra solo ese producto (útil para el link de la bio)
-  const list = qs.get("p") ? cfg.products.filter(p => p.id === qs.get("p")) : cfg.products;
+  // tudominio.com/farolillos (o ?p=farolillos) muestra solo ese producto
+  const slug = location.pathname.replace(/^\/|\/$|\.html$/g, "") || qs.get("p");
+  const one = cfg.products.find(p => p.id === slug);
+  const list = one ? [one] : cfg.products;
+  if (one) document.title = one.name + " · " + cfg.storeName;
   window.CFG = cfg; list.forEach(p => { if (p.variants) SEL[p.id] = p.variants[0].id; });
   document.getElementById("app").innerHTML =
     (qs.get("cancelado") ? '<p class="note">El pago se canceló. Puedes intentarlo de nuevo.</p>' : "") +
@@ -36,12 +40,13 @@ fetch("/api/products").then(r => r.json()).then(cfg => {
     <article class="product" id="${p.id}">
       <img src="${p.images[0]}" alt="${p.name}">
       <div class="info">
-        <h1>${p.name}</h1>
+        <h1>${one ? p.name : `<a href="/${p.id}">${p.name}</a>`}</h1>
         <p class="tagline">${p.tagline}</p>
         <p class="price">${fmt(p.price, cfg.currency)} 
           ${p.compareAt ? `<s>${fmt(p.compareAt, cfg.currency)}</s><span class="off">-${Math.round(100 - p.price / p.compareAt * 100)}%</span>` : ""}</p>
         <ul>${p.bullets.map(b => `<li>${b}</li>`).join("")}</ul>
         ${p.variants ? `<div class="variants" data-p="${p.id}"><span class="muted">Color: <b id="vn-${p.id}">${p.variants[0].name}</b></span><div>${p.variants.map((v,i) => `<button type="button" class="sw${i===0?' on':''}" title="${v.name}" style="background:${v.swatch||'#ccc'}" onclick="pick('${p.id}','${v.id}',this)"></button>`).join("")}</div></div>` : ""}
+        ${p.sizes ? `<label class="qty">Talla <select id="s-${p.id}"><option value="">Elige talla</option>${p.sizes.map(z => `<option>${z}</option>`).join("")}</select></label>` : ""}
         <label class="qty">Cantidad
           <select id="q-${p.id}">${[1,2,3,4,5].map(n => `<option>${n}</option>`).join("")}</select></label>
         <button class="buy" onclick="buy('${p.id}', this)">Comprar ahora</button>
@@ -60,10 +65,12 @@ function pick(pid, vid, el) {
   card.querySelector(".price").firstChild.textContent = fmt(v.price || p.price, CFG.currency) + " ";
 }
 async function buy(id, btn) {
+  const sz = document.getElementById("s-" + id);
+  if (sz && !sz.value) { sz.focus(); sz.classList.add("err"); return; }
   btn.disabled = true; btn.textContent = "Redirigiendo al pago…";
   try {
     const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId: id, variantId: SEL[id], quantity: document.getElementById("q-" + id).value }) });
+      body: JSON.stringify({ productId: id, variantId: SEL[id], size: sz ? sz.value : undefined, quantity: document.getElementById("q-" + id).value }) });
     const d = await r.json();
     if (d.url) location.href = d.url; else throw new Error(d.error);
   } catch (e) {
