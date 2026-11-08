@@ -1,0 +1,8 @@
+{
+  "name": "tienda-dropshipping",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tienda propia con Stripe Checkout, sin Shopify. Deploy en Vercel.",
+  "engines": { "node": ">=18" },
+  "dependencies": { "stripe": "^16.12.0" }
+}

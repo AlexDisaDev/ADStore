@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tienda</title>
+<meta name="description" content="Envío gratis. Pago seguro con Stripe.">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="bar" id="bar">Envío gratis</div>
+<header class="top"><a href="/" class="logo" id="logo">Tienda</a></header>
+<main id="app"><p class="muted center">Cargando…</p></main>
+<section class="trust">
+  <div>🔒 Pago 100% seguro con Stripe</div>
+  <div>↩️ Devolución 30 días</div>
+  <div>📦 Seguimiento del envío</div>
+</section>
+<footer>
+  <a href="/legal.html">Aviso legal · Privacidad · Devoluciones</a>
+</footer>
+<script>
+const fmt = (c, cur) => new Intl.NumberFormat("es-ES", { style: "currency", currency: cur }).format(c / 100);
+const qs = new URLSearchParams(location.search);
+
+fetch("/api/products").then(r => r.json()).then(cfg => {
+  document.title = cfg.storeName;
+  document.getElementById("logo").textContent = cfg.storeName;
+  document.getElementById("bar").textContent = cfg.freeShippingText;
+  // ?p=producto-2 muestra solo ese producto (útil para el link de la bio)
+  const list = qs.get("p") ? cfg.products.filter(p => p.id === qs.get("p")) : cfg.products;
+  document.getElementById("app").innerHTML =
+    (qs.get("cancelado") ? '<p class="note">El pago se canceló. Puedes intentarlo de nuevo.</p>' : "") +
+    list.map(p => `
+    <article class="product" id="${p.id}">
+      <img src="${p.images[0]}" alt="${p.name}">
+      <div class="info">
+        <h1>${p.name}</h1>
+        <p class="tagline">${p.tagline}</p>
+        <p class="price">${fmt(p.price, cfg.currency)}
+          ${p.compareAt ? `<s>${fmt(p.compareAt, cfg.currency)}</s><span class="off">-${Math.round(100 - p.price / p.compareAt * 100)}%</span>` : ""}</p>
+        <ul>${p.bullets.map(b => `<li>${b}</li>`).join("")}</ul>
+        <label class="qty">Cantidad
+          <select id="q-${p.id}">${[1,2,3,4,5].map(n => `<option>${n}</option>`).join("")}</select></label>
+        <button onclick="buy('${p.id}', this)">Comprar ahora</button>
+      </div>
+    </article>`).join("");
+});
+
+async function buy(id, btn) {
+  btn.disabled = true; btn.textContent = "Redirigiendo al pago…";
+  try {
+    const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId: id, quantity: document.getElementById("q-" + id).value }) });
+    const d = await r.json();
+    if (d.url) location.href = d.url; else throw new Error(d.error);
+  } catch (e) {
+    btn.disabled = false; btn.textContent = "Comprar ahora";
+    alert("Error: " + e.message);
+  }
+}
+</script>
+</body>
+</html>
