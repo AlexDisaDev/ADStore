@@ -10,9 +10,10 @@ h1{font-size:28px;margin:0 0 4px}.tagline{color:var(--muted);margin:0 0 12px}
 .price{font-size:26px;font-weight:800;margin:0 0 12px}.price s{color:var(--muted);font-weight:400;font-size:18px;margin-left:8px}
 .off{background:var(--accent);color:#fff;font-size:14px;padding:2px 8px;border-radius:99px;margin-left:8px;vertical-align:middle}
 ul{padding-left:20px}.qty{display:block;margin:12px 0;color:var(--muted)}select{font-size:16px;padding:6px;margin-left:8px}
-button,.btn{display:block;width:100%;background:var(--accent);color:#fff;border:0;border-radius:12px;padding:16px;font-size:18px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none}
-button:disabled{opacity:.6}
+button.buy,.btn{display:block;width:100%;background:var(--accent);color:#fff;border:0;border-radius:12px;padding:16px;font-size:18px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none}
+button.buy:disabled{opacity:.6}
 .trust{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;padding:24px 16px;background:var(--soft);font-size:14px}
 footer{text-align:center;padding:24px;font-size:13px}footer a{color:var(--muted)}
 .center{text-align:center}.muted{color:var(--muted)}.note{background:#fff4e5;padding:12px;border-radius:8px}
 .thanks{padding-top:80px;max-width:520px}.legal{max-width:720px}
+.variants{margin:12px 0}.variants div{display:flex;gap:10px;margin-top:6px}.sw{width:34px;height:34px;border-radius:50%;border:2px solid #ddd;cursor:pointer;padding:0}.sw.on{outline:2px solid var(--fg);outline-offset:2px}

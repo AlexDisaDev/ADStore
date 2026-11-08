@@ -10,6 +10,14 @@ module.exports = async (req, res) => {
   const product = config.products.find(p => p.id === body.productId);
   const qty = Math.min(Math.max(parseInt(body.quantity, 10) || 1, 1), 10);
   if (!product) return res.status(400).json({ error: "Producto no encontrado" });
+  let variant = null;
+  if (product.variants && product.variants.length) {
+    variant = product.variants.find(v => v.id === body.variantId);
+    if (!variant) return res.status(400).json({ error: "Elige un color" });
+  }
+  const name = variant ? `${product.name} - ${variant.name}` : product.name;
+  const price = (variant && variant.price) || product.price;
+  const images = (variant && variant.image) ? [variant.image] : product.images;
 
   const origin = process.env.SITE_URL || `https://${req.headers.host}`;
   try {
@@ -19,16 +27,16 @@ module.exports = async (req, res) => {
         quantity: qty,
         price_data: {
           currency: config.currency,
-          unit_amount: product.price,
-          product_data: { name: product.name, images: product.images.map(i => i.startsWith("http") ? i : origin + i).filter(i => !i.endsWith(".svg")) }
+          unit_amount: price,
+          product_data: { name, images: images.map(i => i.startsWith("http") ? i : origin + i).filter(i => !i.endsWith(".svg")) }
         }
       }],
       shipping_address_collection: { allowed_countries: config.shippingCountries },
       phone_number_collection: { enabled: true },
       allow_promotion_codes: true,
       customer_creation: "always",
-      payment_intent_data: { description: `${product.name} x${qty}`, metadata: { productId: product.id, quantity: String(qty) } },
-      metadata: { productId: product.id, quantity: String(qty) },
+      payment_intent_data: { description: `${name} x${qty}`, metadata: { productId: product.id, variant: variant ? variant.id : "", quantity: String(qty) } },
+      metadata: { productId: product.id, variant: variant ? variant.id : "", quantity: String(qty) },
       success_url: `${origin}/gracias.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/?cancelado=1`
     });
