@@ -2,82 +2,308 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tienda</title>
-<meta name="description" content="Envío gratis. Pago seguro con Stripe.">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ADStore</title>
+<meta name="description" content="Envío gratis con seguimiento. Pago 100% seguro. Devolución 30 días.">
+<meta name="theme-color" content="#fbf8f5">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/styles.css">
 <base href="/">
 </head>
 <body>
-<div class="bar" id="bar">Envío gratis</div>
-<header class="top"><a href="/" class="logo" id="logo">Tienda</a></header>
-<main id="app"><p class="muted center">Cargando…</p></main>
-<section class="trust">
-  <div>🔒 Pago 100% seguro con Stripe</div>
-  <div>↩️ Devolución 30 días</div>
-  <div>📦 Seguimiento del envío</div>
-</section>
-<footer>
-  <a href="/legal.html">Aviso legal · Privacidad · Devoluciones</a>
+<div class="announce"><div class="announce-track" id="announce">
+  <span>Envío gratis con seguimiento</span><span>Devolución 30 días</span><span>Pago 100% seguro</span>
+</div></div>
+
+<header class="site-header">
+  <div class="wrap header-row">
+    <a href="/" class="logo" id="logo">ADStore</a>
+    <nav class="header-links"><a href="#faq">Ayuda</a></nav>
+  </div>
+</header>
+
+<main id="app"><div class="loading"><span></span></div></main>
+
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div>
+      <div class="logo" id="logo-foot">ADStore</div>
+      <p class="muted small">Pago procesado por Stripe. Nunca vemos los datos de tu tarjeta.</p>
+    </div>
+    <div class="footer-links">
+      <a href="/legal.html">Aviso legal</a>
+      <a href="/legal.html#privacidad">Privacidad</a>
+      <a href="/legal.html#devoluciones">Envíos y devoluciones</a>
+    </div>
+  </div>
+  <div class="wrap small muted copy">© <span id="year"></span> ADStore</div>
 </footer>
+
+<dialog id="size-dialog" class="sheet">
+  <form method="dialog"><button class="sheet-close" aria-label="Cerrar">✕</button></form>
+  <div id="size-content"></div>
+</dialog>
+
+<div class="sticky-buy" id="sticky" hidden>
+  <img id="sticky-img" alt="">
+  <div class="sticky-info"><div class="sticky-name" id="sticky-name"></div><div class="sticky-price" id="sticky-price"></div></div>
+  <button class="btn btn-dark" id="sticky-btn">Comprar</button>
+</div>
+
 <script>
-const fmt = (c, cur) => new Intl.NumberFormat("es-ES", { style: "currency", currency: cur }).format(c / 100);
+const ICONS = {
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  truck: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+  ret: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
+  waist: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3c0 5 2 6 2 9s-2 4-2 9M17 3c0 5-2 6-2 9s2 4 2 9"/><path d="M9.5 12h5"/></svg>',
+  eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  air: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h11a3 3 0 1 0-3-3M3 12h15a3 3 0 1 1-3 3M3 16h7"/></svg>',
+  ruler: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17 17 3l4 4L7 21z"/><path d="m7 13 2 2M10 10l2 2M13 7l2 2"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'
+};
+const fmt = c => new Intl.NumberFormat("es-ES", { style: "currency", currency: (window.CFG && CFG.currency) || "eur" }).format(c / 100);
 const qs = new URLSearchParams(location.search);
+const S = { variant: null, size: null, qty: 1 };
+let P = null;
 
-fetch("/api/products").then(r => r.json()).then(cfg => {
-  document.title = cfg.storeName;
-  document.getElementById("logo").textContent = cfg.storeName;
-  document.getElementById("bar").textContent = cfg.freeShippingText;
-  // tudominio.com/farolillos (o ?p=farolillos) muestra solo ese producto
-  const slug = location.pathname.replace(/^\/|\/$|\.html$/g, "") || qs.get("p");
-  const one = cfg.products.find(p => p.id === slug);
-  const list = one ? [one] : cfg.products;
-  if (one) document.title = one.name + " · " + cfg.storeName;
-  window.CFG = cfg; list.forEach(p => { if (p.variants) SEL[p.id] = p.variants[0].id; });
-  document.getElementById("app").innerHTML =
-    (qs.get("cancelado") ? '<p class="note">El pago se canceló. Puedes intentarlo de nuevo.</p>' : "") +
-    list.map(p => `
-    <article class="product" id="${p.id}">
-      <img src="${p.images[0]}" alt="${p.name}">
-      <div class="info">
-        <h1>${one ? p.name : `<a href="/${p.id}">${p.name}</a>`}</h1>
-        <p class="tagline">${p.tagline}</p>
-        <p class="price">${fmt(p.price, cfg.currency)} 
-          ${p.compareAt ? `<s>${fmt(p.compareAt, cfg.currency)}</s><span class="off">-${Math.round(100 - p.price / p.compareAt * 100)}%</span>` : ""}</p>
-        <ul>${p.bullets.map(b => `<li>${b}</li>`).join("")}</ul>
-        ${p.variants ? `<div class="variants" data-p="${p.id}"><span class="muted">Color: <b id="vn-${p.id}">${p.variants[0].name}</b></span><div>${p.variants.map((v,i) => `<button type="button" class="sw${i===0?' on':''}" title="${v.name}" style="background:${v.swatch||'#ccc'}" onclick="pick('${p.id}','${v.id}',this)"></button>`).join("")}</div></div>` : ""}
-        ${p.sizes ? `<label class="qty">Talla <select id="s-${p.id}"><option value="">Elige talla</option>${p.sizes.map(z => `<option>${z}</option>`).join("")}</select></label>` : ""}
-        <label class="qty">Cantidad
-          <select id="q-${p.id}">${[1,2,3,4,5].map(n => `<option>${n}</option>`).join("")}</select></label>
-        <button class="buy" onclick="buy('${p.id}', this)">Comprar ahora</button>
-      </div>
-    </article>`).join("");
-});
+function addBusinessDays(d, n) { d = new Date(d); while (n > 0) { d.setDate(d.getDate() + 1); if (d.getDay() % 6) n--; } return d; }
+const dShort = d => d.toLocaleDateString("es-ES", { day: "numeric", month: "short" }).replace(".", "");
 
-const SEL = {};
-function pick(pid, vid, el) {
-  SEL[pid] = vid;
-  const p = CFG.products.find(x => x.id === pid), v = p.variants.find(x => x.id === vid);
-  el.parentNode.querySelectorAll(".sw").forEach(b => b.classList.remove("on")); el.classList.add("on");
-  document.getElementById("vn-" + pid).textContent = v.name;
-  const card = document.getElementById(pid);
-  if (v.image) card.querySelector("img").src = v.image;
-  card.querySelector(".price").firstChild.textContent = fmt(v.price || p.price, CFG.currency) + " ";
+function unitPrice(qty) {
+  const base = (S.variant && S.variant.price) || P.price;
+  const b = (P.bundles || []).find(x => x.qty === qty);
+  return Math.round(base * (1 - ((b && b.discount) || 0) / 100));
 }
-async function buy(id, btn) {
-  const sz = document.getElementById("s-" + id);
-  if (sz && !sz.value) { sz.focus(); sz.classList.add("err"); return; }
-  btn.disabled = true; btn.textContent = "Redirigiendo al pago…";
+
+function gallery(p) {
+  const imgs = [...new Set([...(p.variants || []).map(v => v.image).filter(Boolean), ...p.images])];
+  return `
+  <div class="gallery">
+    <div class="main-img" id="main-img-wrap">
+      ${p.compareAt ? `<span class="sale-badge">-${Math.round(100 - p.price / p.compareAt * 100)}%</span>` : ""}
+      <div class="slides" id="slides">${imgs.map((src, i) => `<img src="${src}" alt="${p.name}" ${i ? 'loading="lazy"' : ""} data-i="${i}">`).join("")}</div>
+    </div>
+    ${imgs.length > 1 ? `<div class="thumbs">${imgs.map((src, i) => `<button class="thumb${i ? "" : " on"}" data-src="${src}" onclick="goSlide(${i})"><img src="${src}" alt=""></button>`).join("")}</div>` : ""}
+  </div>`;
+}
+
+function productPage(p) {
+  const today = new Date();
+  const from = addBusinessDays(today, 8), to = addBusinessDays(today, 15);
+  const save = p.compareAt ? p.compareAt - p.price : 0;
+  return `
+  ${qs.get("cancelado") ? '<div class="wrap"><p class="note">El pago se canceló. Tu selección sigue aquí, puedes intentarlo de nuevo.</p></div>' : ""}
+  <section class="wrap product">
+    ${gallery(p)}
+    <div class="buybox" id="buybox">
+      ${p.badge ? `<span class="pill">${p.badge}</span>` : ""}
+      <h1>${p.name}</h1>
+      <p class="tagline">${p.tagline}</p>
+      <div class="price-row">
+        <span class="price" id="price">${fmt(p.price)}</span>
+        ${p.compareAt ? `<s class="compare">${fmt(p.compareAt)}</s><span class="save">Ahorras ${fmt(save)}</span>` : ""}
+      </div>
+      <p class="tax small muted">IVA incluido · Envío gratis</p>
+
+      <ul class="checks">${p.bullets.map(b => `<li>${ICONS.check}<span>${b}</span></li>`).join("")}</ul>
+
+      ${p.variants ? `
+      <div class="opt">
+        <div class="opt-label">Color: <b id="vname">${p.variants[0].name}</b></div>
+        <div class="swatches">${p.variants.map((v, i) => `<button type="button" class="swatch${i ? "" : " on"}" style="--c:${v.swatch}" aria-label="${v.name}" onclick="pickVariant('${v.id}', this)"></button>`).join("")}</div>
+      </div>` : ""}
+
+      ${p.sizes ? `
+      <div class="opt">
+        <div class="opt-label opt-between"><span>Talla: <b id="sname">elige tu talla</b></span>
+          ${p.sizeGuide ? `<button class="link-btn" onclick="openSizes()">${ICONS.ruler} Guía de tallas</button>` : ""}</div>
+        <div class="sizes" id="sizes">${p.sizes.map(z => `<button type="button" class="size" onclick="pickSize('${z}', this)">${z}</button>`).join("")}</div>
+        <p class="err-msg" id="size-err" hidden>Elige una talla para continuar</p>
+      </div>` : ""}
+
+      ${p.bundles ? `
+      <div class="opt">
+        <div class="opt-label">Cantidad</div>
+        <div class="bundles" id="bundles">${p.bundles.map((b, i) => `
+          <label class="bundle${i ? "" : " on"}">
+            <input type="radio" name="bundle" value="${b.qty}" ${i ? "" : "checked"} onchange="pickQty(${b.qty}, this)">
+            ${b.tag ? `<span class="bundle-tag">${b.tag}</span>` : ""}
+            <span class="bundle-main"><b>${b.label}</b>${b.discount ? `<span class="bundle-off">-${b.discount}%</span>` : ""}</span>
+            <span class="bundle-price" data-qty="${b.qty}"></span>
+          </label>`).join("")}
+        </div>
+        ${p.sizes ? '<p class="small muted">Los packs van en el mismo color y talla.</p>' : ""}
+      </div>` : `
+      <div class="opt"><div class="opt-label">Cantidad</div>
+        <div class="stepper"><button type="button" onclick="step(-1)">−</button><span id="qtyv">1</span><button type="button" onclick="step(1)">+</button></div></div>`}
+
+      <button class="btn btn-dark btn-buy" id="buy-btn" onclick="buy(this)">Comprar ahora · <span id="btn-total">${fmt(p.price)}</span></button>
+      <p class="err-msg" id="buy-err" hidden></p>
+
+      <div class="delivery">${ICONS.truck}<div><b>Pídelo hoy y recíbelo entre el ${dShort(from)} y el ${dShort(to)}</b><span class="small muted">Envío gratis con número de seguimiento</span></div></div>
+
+      <div class="pay-row">
+        <span class="small muted">${ICONS.lock} Pago seguro con</span>
+        <span class="paym">VISA</span><span class="paym">Mastercard</span><span class="paym">Apple Pay</span><span class="paym">Google Pay</span>
+      </div>
+
+      ${p.details ? `<div class="accordion">${p.details.map((d, i) => `
+        <details ${i ? "" : "open"}><summary>${d.title}${ICONS.plus}</summary><p>${d.text}</p></details>`).join("")}</div>` : ""}
+    </div>
+  </section>
+
+  <section class="trust-strip">
+    <div class="wrap trust-grid">
+      <div>${ICONS.truck}<b>Envío gratis</b><span>Con seguimiento</span></div>
+      <div>${ICONS.ret}<b>30 días</b><span>Para devolverlo</span></div>
+      <div>${ICONS.lock}<b>Pago seguro</b><span>Procesado por Stripe</span></div>
+    </div>
+  </section>
+
+  ${p.highlights ? `
+  <section class="wrap section">
+    <h2 class="section-title">Por qué te va a encantar</h2>
+    <div class="highlights">${p.highlights.map(h => `
+      <div class="hl"><div class="hl-icon">${ICONS[h.icon] || ICONS.check}</div><h3>${h.title}</h3><p>${h.text}</p></div>`).join("")}
+    </div>
+  </section>` : ""}
+
+  ${(p.variants || []).length > 1 ? `
+  <section class="wrap section split">
+    <div class="split-imgs">${p.variants.slice(0, 2).map(v => `<figure><img src="${v.image}" alt="${p.name} ${v.name}" loading="lazy"><figcaption>${v.name}</figcaption></figure>`).join("")}</div>
+    <div class="split-text">
+      <h2 class="section-title left">Un básico para cualquier look</h2>
+      <p class="muted">En ${p.variants.map(v => v.name.toLowerCase()).join(" y ")}: elige el tono que mejor va con tu ropa para que no se note ni con prendas claras ni oscuras.</p>
+      <button class="btn btn-outline" onclick="scrollToBuy()">Elegir mi talla</button>
+    </div>
+  </section>` : ""}
+
+  <section class="guarantee">
+    <div class="wrap guarantee-in">
+      <div class="seal">30<small>días</small></div>
+      <div><h2>Pruébalo sin riesgo</h2><p>Si no te convence o la talla no es la tuya, tienes 30 días desde que lo recibes para devolverlo. Sin complicaciones.</p></div>
+    </div>
+  </section>
+
+  ${p.faq ? `
+  <section class="wrap section narrow" id="faq">
+    <h2 class="section-title">Preguntas frecuentes</h2>
+    <div class="accordion">${p.faq.map(f => `<details><summary>${f.q}${ICONS.plus}</summary><p>${f.a}</p></details>`).join("")}</div>
+  </section>` : ""}
+
+  <section class="wrap section final-cta">
+    <h2 class="section-title">${p.name}</h2>
+    <p class="muted">${fmt(p.price)} ${p.compareAt ? `<s>${fmt(p.compareAt)}</s>` : ""} · Envío gratis</p>
+    <button class="btn btn-dark" onclick="scrollToBuy()">Lo quiero</button>
+  </section>`;
+}
+
+function grid(list) {
+  return `<section class="wrap section"><h1 class="section-title">Nuestros productos</h1><div class="grid">${list.map(p => `
+    <a class="card" href="/${p.id}"><div class="card-img"><img src="${p.images[0]}" alt="${p.name}">${p.compareAt ? `<span class="sale-badge">-${Math.round(100 - p.price / p.compareAt * 100)}%</span>` : ""}</div>
+    <h3>${p.name}</h3><p><b>${fmt(p.price)}</b> ${p.compareAt ? `<s class="muted">${fmt(p.compareAt)}</s>` : ""}</p></a>`).join("")}</div></section>`;
+}
+
+function refresh() {
+  const u = unitPrice(S.qty);
+  document.getElementById("price").textContent = fmt(unitPrice(1));
+  document.getElementById("btn-total").textContent = fmt(u * S.qty);
+  document.querySelectorAll(".bundle-price").forEach(el => {
+    const q = +el.dataset.qty, up = unitPrice(q);
+    el.innerHTML = `<b>${fmt(up * q)}</b>${q > 1 ? `<small>${fmt(up)}/ud</small>` : ""}`;
+  });
+  document.getElementById("sticky-price").textContent = fmt(u * S.qty);
+  document.getElementById("sticky-name").textContent = [S.variant && S.variant.name, S.size && "Talla " + S.size].filter(Boolean).join(" · ") || P.name;
+  document.getElementById("sticky-img").src = (S.variant && S.variant.image) || P.images[0];
+}
+
+function goSlide(i) {
+  const slides = document.getElementById("slides");
+  slides.scrollTo({ left: slides.clientWidth * i, behavior: "smooth" });
+  document.querySelectorAll(".thumb").forEach((t, j) => t.classList.toggle("on", i === j));
+}
+function pickVariant(id, el) {
+  S.variant = P.variants.find(v => v.id === id);
+  document.querySelectorAll(".swatch").forEach(b => b.classList.remove("on")); el.classList.add("on");
+  document.getElementById("vname").textContent = S.variant.name;
+  if (S.variant.image) {
+    const idx = [...document.querySelectorAll("#slides img")].findIndex(im => im.getAttribute("src") === S.variant.image);
+    if (idx >= 0) goSlide(idx);
+  }
+  refresh();
+}
+function pickSize(z, el) {
+  S.size = z;
+  document.querySelectorAll(".size").forEach(b => b.classList.remove("on")); el.classList.add("on");
+  document.getElementById("sname").textContent = z;
+  document.getElementById("size-err").hidden = true;
+  document.getElementById("sizes").classList.remove("shake");
+  refresh();
+}
+function pickQty(q, el) {
+  S.qty = q;
+  document.querySelectorAll(".bundle").forEach(b => b.classList.remove("on")); el.closest(".bundle").classList.add("on");
+  refresh();
+}
+function step(d) { S.qty = Math.min(5, Math.max(1, S.qty + d)); document.getElementById("qtyv").textContent = S.qty; refresh(); }
+function scrollToBuy() { document.getElementById("buybox").scrollIntoView({ behavior: "smooth", block: "start" }); }
+function openSizes() {
+  const g = P.sizeGuide;
+  document.getElementById("size-content").innerHTML = `<h3>Guía de tallas</h3>
+    <table><thead><tr>${g.headers.map(h => `<th>${h}</th>`).join("")}</tr></thead>
+    <tbody>${g.rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>
+    <p class="small muted">${g.tip || ""}</p>`;
+  document.getElementById("size-dialog").showModal();
+}
+
+async function buy(btn) {
+  if (P.sizes && !S.size) {
+    scrollToBuy();
+    const s = document.getElementById("sizes"); s.classList.remove("shake"); void s.offsetWidth; s.classList.add("shake");
+    document.getElementById("size-err").hidden = false; return;
+  }
+  const label = btn.innerHTML; btn.disabled = true; btn.textContent = "Abriendo pago seguro…";
   try {
     const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId: id, variantId: SEL[id], size: sz ? sz.value : undefined, quantity: document.getElementById("q-" + id).value }) });
+      body: JSON.stringify({ productId: P.id, variantId: S.variant && S.variant.id, size: S.size, quantity: S.qty }) });
     const d = await r.json();
-    if (d.url) location.href = d.url; else throw new Error(d.error);
+    if (d.url) { location.href = d.url; return; }
+    throw new Error(d.error || "Error");
   } catch (e) {
-    btn.disabled = false; btn.textContent = "Comprar ahora";
-    alert("Error: " + e.message);
+    btn.disabled = false; btn.innerHTML = label;
+    const m = document.getElementById("buy-err");
+    m.textContent = "No se pudo abrir el pago: " + e.message; m.hidden = false;
   }
 }
+
+fetch("/api/products").then(r => r.json()).then(cfg => {
+  window.CFG = cfg;
+  document.getElementById("year").textContent = new Date().getFullYear();
+  ["logo", "logo-foot"].forEach(id => document.getElementById(id).textContent = cfg.storeName);
+  const slug = location.pathname.replace(/^\/|\/$|\.html$/g, "") || qs.get("p");
+  const list = cfg.products;
+  P = list.find(p => p.id === slug) || (list.length === 1 ? list[0] : null);
+  const app = document.getElementById("app");
+  if (!P) { document.title = cfg.storeName; app.innerHTML = grid(list); return; }
+  document.title = `${P.name} · ${cfg.storeName}`;
+  S.variant = P.variants ? P.variants[0] : null;
+  app.innerHTML = productPage(P);
+  refresh();
+  // barra fija en móvil cuando el botón principal sale de pantalla
+  const sticky = document.getElementById("sticky");
+  document.getElementById("sticky-btn").onclick = () => buy(document.getElementById("buy-btn"));
+  new IntersectionObserver(([e]) => { sticky.hidden = e.isIntersecting || e.boundingClientRect.top > 0; })
+    .observe(document.getElementById("buy-btn"));
+  // miniaturas siguen al deslizar
+  const slides = document.getElementById("slides");
+  slides.addEventListener("scroll", () => {
+    const i = Math.round(slides.scrollLeft / slides.clientWidth);
+    document.querySelectorAll(".thumb").forEach((t, j) => t.classList.toggle("on", i === j));
+  }, { passive: true });
+});
 </script>
 </body>
 </html>

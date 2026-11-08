@@ -21,7 +21,10 @@ module.exports = async (req, res) => {
     if (!size) return res.status(400).json({ error: "Elige una talla" });
   }
   const name = [product.name, variant && variant.name, size && `Talla ${size}`].filter(Boolean).join(" - ");
-  const price = (variant && variant.price) || product.price;
+  const basePrice = (variant && variant.price) || product.price;
+  const bundle = (product.bundles || []).find(b => b.qty === qty);
+  const price = Math.round(basePrice * (1 - ((bundle && bundle.discount) || 0) / 100));
+  const lineName = bundle && bundle.discount ? `${name} (pack ${qty}, -${bundle.discount}%)` : name;
   const images = (variant && variant.image) ? [variant.image] : product.images;
 
   const origin = process.env.SITE_URL || `https://${req.headers.host}`;
@@ -33,7 +36,7 @@ module.exports = async (req, res) => {
         price_data: {
           currency: config.currency,
           unit_amount: price,
-          product_data: { name, images: images.map(i => i.startsWith("http") ? i : origin + i).filter(i => !i.endsWith(".svg")) }
+          product_data: { name: lineName, images: images.map(i => i.startsWith("http") ? i : origin + i).filter(i => !i.endsWith(".svg")) }
         }
       }],
       shipping_address_collection: { allowed_countries: config.shippingCountries },
