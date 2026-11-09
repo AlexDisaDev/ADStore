@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ADStore</title>
-<meta name="description" content="Free tracked shipping. 100% secure checkout. 30-day returns.">
+<meta name="description" content="Free worldwide tracked shipping. 100% secure checkout. 30-day returns.">
 <meta name="theme-color" content="#fbf8f5">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,7 +14,7 @@
 </head>
 <body>
 <div class="announce"><div class="announce-track" id="announce">
-  <span>Free tracked shipping</span><span>30-day returns</span><span>100% secure checkout</span>
+  <span>Free worldwide shipping</span><span>30-day returns</span><span>100% secure checkout</span>
 </div></div>
 
 <header class="site-header">
@@ -64,13 +64,13 @@ const ICONS = {
   ruler: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17 17 3l4 4L7 21z"/><path d="m7 13 2 2M10 10l2 2M13 7l2 2"/></svg>',
   plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'
 };
-const fmt = c => new Intl.NumberFormat("en-IE", { style: "currency", currency: (window.CFG && CFG.currency) || "eur" }).format(c / 100);
+const fmt = c => new Intl.NumberFormat("en-US", { style: "currency", currency: (window.CFG && CFG.currency) || "usd" }).format(c / 100);
 const qs = new URLSearchParams(location.search);
 const S = { qty: 1, items: [{ variant: null, size: null }], showErr: false }; // una entrada por unidad
 let P = null;
 
 function addBusinessDays(d, n) { d = new Date(d); while (n > 0) { d.setDate(d.getDate() + 1); if (d.getDay() % 6) n--; } return d; }
-const dShort = d => d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+const dShort = d => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 function unitPrice(qty) {
   const v0 = S.items[0].variant;
@@ -107,7 +107,7 @@ function productPage(p) {
         <span class="price" id="price">${fmt(p.price)}</span>
         ${p.compareAt ? `<s class="compare">${fmt(p.compareAt)}</s><span class="save">You save ${fmt(save)}</span>` : ""}
       </div>
-      <p class="tax small muted">VAT included · Free shipping</p>
+      <p class="tax small muted">Free worldwide shipping</p>
 
       <ul class="checks">${p.bullets.map(b => `<li>${ICONS.check}<span>${b}</span></li>`).join("")}</ul>
 
@@ -136,7 +136,7 @@ function productPage(p) {
       <button class="btn btn-dark btn-buy" id="buy-btn" onclick="buy(this)">Buy now · <span id="btn-total">${fmt(p.price)}</span></button>
       <p class="err-msg" id="buy-err" hidden></p>
 
-      <div class="delivery">${ICONS.truck}<div><b>Order today, get it between ${dShort(from)} and ${dShort(to)}</b><span class="small muted">Free shipping with tracking number</span></div></div>
+      <div class="delivery">${ICONS.truck}<div><b>Order today, estimated delivery ${dShort(from)} – ${dShort(to)}</b><span class="small muted">Free tracked shipping · US, UK &amp; Europe. Other countries may take a bit longer.</span></div></div>
 
       <div class="pay-row">
         <span class="small muted">${ICONS.lock} Secure checkout with</span>
@@ -150,7 +150,7 @@ function productPage(p) {
 
   <section class="trust-strip">
     <div class="wrap trust-grid">
-      <div>${ICONS.truck}<b>Free shipping</b><span>With tracking</span></div>
+      <div>${ICONS.truck}<b>Free shipping</b><span>Worldwide, tracked</span></div>
       <div>${ICONS.ret}<b>30 days</b><span>To return it</span></div>
       <div>${ICONS.lock}<b>Secure payment</b><span>Processed by Stripe</span></div>
     </div>
