@@ -66,14 +66,15 @@ const ICONS = {
 };
 const fmt = c => new Intl.NumberFormat("es-ES", { style: "currency", currency: (window.CFG && CFG.currency) || "eur" }).format(c / 100);
 const qs = new URLSearchParams(location.search);
-const S = { variant: null, size: null, qty: 1, extra: [] }; // extra = unidades 2..n del pack
+const S = { qty: 1, items: [{ variant: null, size: null }], showErr: false }; // una entrada por unidad
 let P = null;
 
 function addBusinessDays(d, n) { d = new Date(d); while (n > 0) { d.setDate(d.getDate() + 1); if (d.getDay() % 6) n--; } return d; }
 const dShort = d => d.toLocaleDateString("es-ES", { day: "numeric", month: "short" }).replace(".", "");
 
 function unitPrice(qty) {
-  const base = (S.variant && S.variant.price) || P.price;
+  const v0 = S.items[0].variant;
+  const base = (v0 && v0.price) || P.price;
   const b = (P.bundles || []).find(x => x.qty === qty);
   return Math.round(base * (1 - ((b && b.discount) || 0) / 100));
 }
@@ -110,23 +111,9 @@ function productPage(p) {
 
       <ul class="checks">${p.bullets.map(b => `<li>${ICONS.check}<span>${b}</span></li>`).join("")}</ul>
 
-      ${p.variants ? `
-      <div class="opt">
-        <div class="opt-label">Color: <b id="vname">${p.variants[0].name}</b></div>
-        <div class="swatches">${p.variants.map((v, i) => `<button type="button" class="swatch${i ? "" : " on"}" style="--c:${v.swatch}" aria-label="${v.name}" onclick="pickVariant('${v.id}', this)"></button>`).join("")}</div>
-      </div>` : ""}
-
-      ${p.sizes ? `
-      <div class="opt">
-        <div class="opt-label opt-between"><span>Talla: <b id="sname">elige tu talla</b></span>
-          ${p.sizeGuide ? `<button class="link-btn" onclick="openSizes()">${ICONS.ruler} Guía de tallas</button>` : ""}</div>
-        <div class="sizes" id="sizes">${p.sizes.map(z => `<button type="button" class="size" onclick="pickSize('${z}', this)">${z}</button>`).join("")}</div>
-        <p class="err-msg" id="size-err" hidden>Elige una talla para continuar</p>
-      </div>` : ""}
-
       ${p.bundles ? `
       <div class="opt">
-        <div class="opt-label">Cantidad</div>
+        <div class="opt-label">1. Elige tu pack</div>
         <div class="bundles" id="bundles">${p.bundles.map((b, i) => `
           <label class="bundle${i ? "" : " on"}">
             <input type="radio" name="bundle" value="${b.qty}" ${i ? "" : "checked"} onchange="pickQty(${b.qty}, this)">
@@ -135,10 +122,16 @@ function productPage(p) {
             <span class="bundle-price" data-qty="${b.qty}"></span>
           </label>`).join("")}
         </div>
-        <div id="pack-items"></div>
       </div>` : `
       <div class="opt"><div class="opt-label">Cantidad</div>
         <div class="stepper"><button type="button" onclick="step(-1)">−</button><span id="qtyv">1</span><button type="button" onclick="step(1)">+</button></div></div>`}
+
+      ${p.variants || p.sizes ? `
+      <div class="opt">
+        <div class="opt-label opt-between"><span>${p.bundles ? "2. " : ""}Elige color${p.sizes ? " y talla" : ""}</span>
+          ${p.sizeGuide ? `<button class="link-btn" onclick="openSizes()">${ICONS.ruler} Guía de tallas</button>` : ""}</div>
+        <div id="units"></div>
+      </div>` : ""}
 
       <button class="btn btn-dark btn-buy" id="buy-btn" onclick="buy(this)">Comprar ahora · <span id="btn-total">${fmt(p.price)}</span></button>
       <p class="err-msg" id="buy-err" hidden></p>
@@ -216,8 +209,9 @@ function refresh() {
     el.innerHTML = `<b>${fmt(up * q)}</b>${q > 1 ? `<small>${fmt(up)}/ud</small>` : ""}`;
   });
   document.getElementById("sticky-price").textContent = fmt(u * S.qty);
-  document.getElementById("sticky-name").textContent = S.qty > 1 ? `Pack de ${S.qty}` : ([S.variant && S.variant.name, S.size && "Talla " + S.size].filter(Boolean).join(" · ") || P.name);
-  document.getElementById("sticky-img").src = (S.variant && S.variant.image) || P.images[0];
+  const it0 = S.items[0];
+  document.getElementById("sticky-name").textContent = S.qty > 1 ? `Pack de ${S.qty}` : ([it0.variant && it0.variant.name, it0.size && "Talla " + it0.size].filter(Boolean).join(" · ") || P.name);
+  document.getElementById("sticky-img").src = (it0.variant && it0.variant.image) || P.images[0];
 }
 
 function goSlide(i) {
@@ -225,53 +219,51 @@ function goSlide(i) {
   slides.scrollTo({ left: slides.clientWidth * i, behavior: "smooth" });
   document.querySelectorAll(".thumb").forEach((t, j) => t.classList.toggle("on", i === j));
 }
-function pickVariant(id, el) {
-  S.variant = P.variants.find(v => v.id === id);
-  document.querySelectorAll(".swatch").forEach(b => b.classList.remove("on")); el.classList.add("on");
-  document.getElementById("vname").textContent = S.variant.name;
-  renderPack();
-  if (S.variant.image) {
-    const idx = [...document.querySelectorAll("#slides img")].findIndex(im => im.getAttribute("src") === S.variant.image);
-    if (idx >= 0) goSlide(idx);
-  }
-  refresh();
+function renderUnits() {
+  const box = document.getElementById("units");
+  if (!box) return;
+  const multi = S.items.length > 1;
+  box.className = multi ? "units multi" : "units";
+  box.innerHTML = S.items.map((it, i) => `
+    <div class="unit${S.showErr && P.sizes && !it.size ? " missing" : ""}">
+      ${multi ? `<div class="unit-head"><span class="pack-n">${i + 1}</span><b>Unidad ${i + 1}</b><span class="unit-sum">${[it.variant && it.variant.name, it.size && "Talla " + it.size].filter(Boolean).join(" · ")}</span></div>` : ""}
+      ${P.variants ? `
+      <div class="unit-line">
+        ${multi ? "" : `<div class="opt-sub">Color: <b>${it.variant.name}</b></div>`}
+        <div class="swatches">${P.variants.map(v => `<button type="button" class="swatch${multi ? " sm" : ""}${it.variant && it.variant.id === v.id ? " on" : ""}" style="--c:${v.swatch}" aria-label="${v.name}" title="${v.name}" onclick="setItem(${i},'variant','${v.id}')"></button>`).join("")}</div>
+      </div>` : ""}
+      ${P.sizes ? `
+      <div class="unit-line">
+        ${multi ? "" : `<div class="opt-sub">Talla: <b>${it.size || "elige tu talla"}</b></div>`}
+        <div class="sizes${multi ? " sm" : ""}">${P.sizes.map(z => `<button type="button" class="size${it.size === z ? " on" : ""}" onclick="setItem(${i},'size','${z}')">${z}</button>`).join("")}</div>
+        ${S.showErr && !it.size ? '<p class="err-msg">Elige una talla</p>' : ""}
+      </div>` : ""}
+    </div>`).join("");
 }
-function pickSize(z, el) {
-  S.size = z;
-  document.querySelectorAll(".size").forEach(b => b.classList.remove("on")); el.classList.add("on");
-  document.getElementById("sname").textContent = z;
-  document.getElementById("size-err").hidden = true;
-  document.getElementById("sizes").classList.remove("shake");
-  renderPack();
-  refresh();
+function setItem(i, k, val) {
+  const it = S.items[i];
+  if (k === "variant") {
+    it.variant = P.variants.find(v => v.id === val);
+    if (it.variant.image) {
+      const idx = [...document.querySelectorAll("#slides img")].findIndex(im => im.getAttribute("src") === it.variant.image);
+      if (idx >= 0) goSlide(idx);
+    }
+  } else it.size = val;
+  if (S.items.every(x => !P.sizes || x.size)) { S.showErr = false; document.getElementById("buy-err").hidden = true; }
+  renderUnits(); refresh();
 }
 function pickQty(q, el) {
   S.qty = q;
-  while (S.extra.length < q - 1) S.extra.push({ variant: S.variant, size: null });
-  S.extra.length = q - 1;
-  renderPack();
+  while (S.items.length < q) S.items.push({ variant: S.items[S.items.length - 1].variant, size: null });
+  S.items.length = q;
   document.querySelectorAll(".bundle").forEach(b => b.classList.remove("on")); el.closest(".bundle").classList.add("on");
-  refresh();
+  renderUnits(); refresh();
 }
-function renderPack() {
-  const box = document.getElementById("pack-items");
-  if (!box) return;
-  if (S.qty < 2 || (!P.variants && !P.sizes)) { box.innerHTML = ""; return; }
-  box.innerHTML = `<div class="pack"><div class="pack-head">Elige color y talla de cada unidad</div>
-    <div class="pack-row"><span class="pack-n">1</span><span class="pack-sum">${[S.variant && S.variant.name, S.size ? "Talla " + S.size : "<em>elige talla arriba</em>"].filter(Boolean).join(" · ")}</span></div>
-    ${S.extra.map((it, i) => `
-    <div class="pack-row">
-      <span class="pack-n">${i + 2}</span>
-      ${P.variants ? `<div class="mini-sw">${P.variants.map(v => `<button type="button" class="swatch sm${it.variant && it.variant.id === v.id ? " on" : ""}" style="--c:${v.swatch}" aria-label="${v.name}" onclick="pickExtra(${i},'variant','${v.id}')"></button>`).join("")}</div>` : ""}
-      ${P.sizes ? `<select class="mini-size${it.size ? "" : " empty"}" onchange="pickExtra(${i},'size',this.value)"><option value="">Talla</option>${P.sizes.map(z => `<option ${it.size === z ? "selected" : ""}>${z}</option>`).join("")}</select>` : ""}
-    </div>`).join("")}</div>`;
+function step(d) {
+  S.qty = Math.min(5, Math.max(1, S.qty + d)); document.getElementById("qtyv").textContent = S.qty;
+  while (S.items.length < S.qty) S.items.push({ variant: S.items[0].variant, size: null });
+  S.items.length = S.qty; renderUnits(); refresh();
 }
-function pickExtra(i, k, val) {
-  S.extra[i][k] = k === "variant" ? P.variants.find(v => v.id === val) : val;
-  document.getElementById("buy-err").hidden = true;
-  renderPack(); refresh();
-}
-function step(d) { S.qty = Math.min(5, Math.max(1, S.qty + d)); document.getElementById("qtyv").textContent = S.qty; refresh(); }
 function scrollToBuy() { document.getElementById("buybox").scrollIntoView({ behavior: "smooth", block: "start" }); }
 function openSizes() {
   const g = P.sizeGuide;
@@ -283,22 +275,19 @@ function openSizes() {
 }
 
 async function buy(btn) {
-  if (P.sizes && !S.size) {
-    scrollToBuy();
-    const s = document.getElementById("sizes"); s.classList.remove("shake"); void s.offsetWidth; s.classList.add("shake");
-    document.getElementById("size-err").hidden = false; return;
-  }
-  if (P.sizes && S.extra.some(it => !it.size)) {
-    const m = document.getElementById("buy-err"); m.textContent = "Elige la talla de cada unidad del pack"; m.hidden = false;
-    document.getElementById("pack-items").scrollIntoView({ behavior: "smooth", block: "center" });
-    document.querySelectorAll(".mini-size.empty").forEach(x => { x.classList.remove("shake"); void x.offsetWidth; x.classList.add("shake"); });
+  if (P.sizes && S.items.some(it => !it.size)) {
+    S.showErr = true; renderUnits();
+    const m = document.getElementById("buy-err");
+    m.textContent = S.items.length > 1 ? "Elige la talla de cada unidad" : "Elige tu talla para continuar"; m.hidden = false;
+    const first = document.querySelector(".unit.missing");
+    if (first) { first.scrollIntoView({ behavior: "smooth", block: "center" }); first.classList.remove("shake"); void first.offsetWidth; first.classList.add("shake"); }
     return;
   }
   const label = btn.innerHTML; btn.disabled = true; btn.textContent = "Abriendo pago seguro…";
   try {
     const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ productId: P.id, quantity: S.qty,
-        items: [{ variantId: S.variant && S.variant.id, size: S.size }, ...S.extra.map(it => ({ variantId: it.variant && it.variant.id, size: it.size }))] }) });
+        items: S.items.map(it => ({ variantId: it.variant && it.variant.id, size: it.size })) }) });
     const d = await r.json();
     if (d.url) { location.href = d.url; return; }
     throw new Error(d.error || "Error");
@@ -319,8 +308,9 @@ fetch("/api/products").then(r => r.json()).then(cfg => {
   const app = document.getElementById("app");
   if (!P) { document.title = cfg.storeName; app.innerHTML = grid(list); return; }
   document.title = `${P.name} · ${cfg.storeName}`;
-  S.variant = P.variants ? P.variants[0] : null;
+  S.items = [{ variant: P.variants ? P.variants[0] : null, size: null }];
   app.innerHTML = productPage(P);
+  renderUnits();
   refresh();
   // barra fija en móvil cuando el botón principal sale de pantalla
   const sticky = document.getElementById("sticky");
