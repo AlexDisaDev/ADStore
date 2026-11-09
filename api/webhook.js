@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
   try {
     event = stripe.webhooks.constructEvent(await rawBody(req), req.headers["stripe-signature"], process.env.STRIPE_WEBHOOK_SECRET);
   } catch (e) {
-    return res.status(400).send(`Firma no válida: ${e.message}`);
+    return res.status(400).send(`Invalid signature: ${e.message}`);
   }
   if (event.type === "checkout.session.completed") {
     const s = event.data.object;

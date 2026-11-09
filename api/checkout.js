@@ -2,28 +2,28 @@ const Stripe = require("stripe");
 const config = require("../lib/products");
 
 module.exports = async (req, res) => {
-  if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
-  if (!process.env.STRIPE_SECRET_KEY) return res.status(500).json({ error: "Falta STRIPE_SECRET_KEY en Vercel" });
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (!process.env.STRIPE_SECRET_KEY) return res.status(500).json({ error: "STRIPE_SECRET_KEY missing in Vercel" });
 
   const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
   const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
   const product = config.products.find(p => p.id === body.productId && p.active !== false);
   const qty = Math.min(Math.max(parseInt(body.quantity, 10) || 1, 1), 10);
-  if (!product) return res.status(400).json({ error: "Producto no encontrado" });
+  if (!product) return res.status(400).json({ error: "Product not found" });
   // Cada unidad puede llevar su propio color y talla: items = [{ variantId, size }, ...]
   const raw = Array.isArray(body.items) && body.items.length ? body.items : [{ variantId: body.variantId, size: body.size }];
-  if (raw.length !== 1 && raw.length !== qty) return res.status(400).json({ error: "Selección incompleta" });
+  if (raw.length !== 1 && raw.length !== qty) return res.status(400).json({ error: "Incomplete selection" });
   const picks = [];
   for (let i = 0; i < qty; i++) {
     const it = raw[raw.length === 1 ? 0 : i] || {};
     let variant = null, size = null;
     if (product.variants && product.variants.length) {
       variant = product.variants.find(v => v.id === it.variantId);
-      if (!variant) return res.status(400).json({ error: "Elige un color" });
+      if (!variant) return res.status(400).json({ error: "Choose a color" });
     }
     if (product.sizes && product.sizes.length) {
       size = product.sizes.find(x => x === it.size);
-      if (!size) return res.status(400).json({ error: "Elige una talla para cada unidad" });
+      if (!size) return res.status(400).json({ error: "Choose a size for each item" });
     }
     picks.push({ variant, size });
   }
@@ -38,10 +38,10 @@ module.exports = async (req, res) => {
     groups.get(key).n++;
   }
   const lines = [...groups.values()].map(({ variant, size, n }) => {
-    const name = [product.name, variant && variant.name, size && `Talla ${size}`].filter(Boolean).join(" - ");
+    const name = [product.name, variant && variant.name, size && `Size ${size}`].filter(Boolean).join(" - ");
     return {
       label: `${n}x ${[variant && variant.name, size].filter(Boolean).join(" ") || product.name}`,
-      name: discount ? `${name} (pack ${qty}, -${discount}%)` : name,
+      name: discount ? `${name} (bundle of ${qty}, -${discount}%)` : name,
       price: Math.round(((variant && variant.price) || product.price) * (1 - discount / 100)),
       images: (variant && variant.image) ? [variant.image] : product.images.slice(0, 1),
       n
@@ -53,6 +53,7 @@ module.exports = async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      locale: "en",
       line_items: lines.map(l => ({
         quantity: l.n,
         price_data: {
@@ -73,6 +74,6 @@ module.exports = async (req, res) => {
     res.status(200).json({ url: session.url });
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: "No se pudo crear el pago" });
+    res.status(500).json({ error: "Could not create checkout" });
   }
 };

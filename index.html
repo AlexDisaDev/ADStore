@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ADStore</title>
-<meta name="description" content="Envío gratis con seguimiento. Pago 100% seguro. Devolución 30 días.">
+<meta name="description" content="Free tracked shipping. 100% secure checkout. 30-day returns.">
 <meta name="theme-color" content="#fbf8f5">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,13 +14,13 @@
 </head>
 <body>
 <div class="announce"><div class="announce-track" id="announce">
-  <span>Envío gratis con seguimiento</span><span>Devolución 30 días</span><span>Pago 100% seguro</span>
+  <span>Free tracked shipping</span><span>30-day returns</span><span>100% secure checkout</span>
 </div></div>
 
 <header class="site-header">
   <div class="wrap header-row">
     <a href="/" class="logo" id="logo">ADStore</a>
-    <nav class="header-links"><a href="#faq">Ayuda</a></nav>
+    <nav class="header-links"><a href="#faq">Help</a></nav>
   </div>
 </header>
 
@@ -30,26 +30,26 @@
   <div class="wrap footer-grid">
     <div>
       <div class="logo" id="logo-foot">ADStore</div>
-      <p class="muted small">Pago procesado por Stripe. Nunca vemos los datos de tu tarjeta.</p>
+      <p class="muted small">Payments processed by Stripe. We never see your card details.</p>
     </div>
     <div class="footer-links">
-      <a href="/legal.html">Aviso legal</a>
-      <a href="/legal.html#privacidad">Privacidad</a>
-      <a href="/legal.html#devoluciones">Envíos y devoluciones</a>
+      <a href="/legal.html">Legal notice</a>
+      <a href="/legal.html#privacy">Privacy</a>
+      <a href="/legal.html#returns">Shipping &amp; returns</a>
     </div>
   </div>
   <div class="wrap small muted copy">© <span id="year"></span> ADStore</div>
 </footer>
 
 <dialog id="size-dialog" class="sheet">
-  <form method="dialog"><button class="sheet-close" aria-label="Cerrar">✕</button></form>
+  <form method="dialog"><button class="sheet-close" aria-label="Close">✕</button></form>
   <div id="size-content"></div>
 </dialog>
 
 <div class="sticky-buy" id="sticky" hidden>
   <img id="sticky-img" alt="">
   <div class="sticky-info"><div class="sticky-name" id="sticky-name"></div><div class="sticky-price" id="sticky-price"></div></div>
-  <button class="btn btn-dark" id="sticky-btn">Comprar</button>
+  <button class="btn btn-dark" id="sticky-btn">Buy now</button>
 </div>
 
 <script>
@@ -64,13 +64,13 @@ const ICONS = {
   ruler: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17 17 3l4 4L7 21z"/><path d="m7 13 2 2M10 10l2 2M13 7l2 2"/></svg>',
   plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'
 };
-const fmt = c => new Intl.NumberFormat("es-ES", { style: "currency", currency: (window.CFG && CFG.currency) || "eur" }).format(c / 100);
+const fmt = c => new Intl.NumberFormat("en-IE", { style: "currency", currency: (window.CFG && CFG.currency) || "eur" }).format(c / 100);
 const qs = new URLSearchParams(location.search);
 const S = { qty: 1, items: [{ variant: null, size: null }], showErr: false }; // una entrada por unidad
 let P = null;
 
 function addBusinessDays(d, n) { d = new Date(d); while (n > 0) { d.setDate(d.getDate() + 1); if (d.getDay() % 6) n--; } return d; }
-const dShort = d => d.toLocaleDateString("es-ES", { day: "numeric", month: "short" }).replace(".", "");
+const dShort = d => d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 
 function unitPrice(qty) {
   const v0 = S.items[0].variant;
@@ -96,7 +96,7 @@ function productPage(p) {
   const from = addBusinessDays(today, 8), to = addBusinessDays(today, 15);
   const save = p.compareAt ? p.compareAt - p.price : 0;
   return `
-  ${qs.get("cancelado") ? '<div class="wrap"><p class="note">El pago se canceló. Tu selección sigue aquí, puedes intentarlo de nuevo.</p></div>' : ""}
+  ${qs.get("cancelado") ? '<div class="wrap"><p class="note">Payment was cancelled. Your selection is still here, you can try again.</p></div>' : ""}
   <section class="wrap product">
     ${gallery(p)}
     <div class="buybox" id="buybox">
@@ -105,15 +105,15 @@ function productPage(p) {
       <p class="tagline">${p.tagline}</p>
       <div class="price-row">
         <span class="price" id="price">${fmt(p.price)}</span>
-        ${p.compareAt ? `<s class="compare">${fmt(p.compareAt)}</s><span class="save">Ahorras ${fmt(save)}</span>` : ""}
+        ${p.compareAt ? `<s class="compare">${fmt(p.compareAt)}</s><span class="save">You save ${fmt(save)}</span>` : ""}
       </div>
-      <p class="tax small muted">IVA incluido · Envío gratis</p>
+      <p class="tax small muted">VAT included · Free shipping</p>
 
       <ul class="checks">${p.bullets.map(b => `<li>${ICONS.check}<span>${b}</span></li>`).join("")}</ul>
 
       ${p.bundles ? `
       <div class="opt">
-        <div class="opt-label">1. Elige tu pack</div>
+        <div class="opt-label">1. Choose your bundle</div>
         <div class="bundles" id="bundles">${p.bundles.map((b, i) => `
           <label class="bundle${i ? "" : " on"}">
             <input type="radio" name="bundle" value="${b.qty}" ${i ? "" : "checked"} onchange="pickQty(${b.qty}, this)">
@@ -123,23 +123,23 @@ function productPage(p) {
           </label>`).join("")}
         </div>
       </div>` : `
-      <div class="opt"><div class="opt-label">Cantidad</div>
+      <div class="opt"><div class="opt-label">Quantity</div>
         <div class="stepper"><button type="button" onclick="step(-1)">−</button><span id="qtyv">1</span><button type="button" onclick="step(1)">+</button></div></div>`}
 
       ${p.variants || p.sizes ? `
       <div class="opt">
-        <div class="opt-label opt-between"><span>${p.bundles ? "2. " : ""}Elige color${p.sizes ? " y talla" : ""}</span>
-          ${p.sizeGuide ? `<button class="link-btn" onclick="openSizes()">${ICONS.ruler} Guía de tallas</button>` : ""}</div>
+        <div class="opt-label opt-between"><span>${p.bundles ? "2. " : ""}Choose color${p.sizes ? " &amp; size" : ""}</span>
+          ${p.sizeGuide ? `<button class="link-btn" onclick="openSizes()">${ICONS.ruler} Size guide</button>` : ""}</div>
         <div id="units"></div>
       </div>` : ""}
 
-      <button class="btn btn-dark btn-buy" id="buy-btn" onclick="buy(this)">Comprar ahora · <span id="btn-total">${fmt(p.price)}</span></button>
+      <button class="btn btn-dark btn-buy" id="buy-btn" onclick="buy(this)">Buy now · <span id="btn-total">${fmt(p.price)}</span></button>
       <p class="err-msg" id="buy-err" hidden></p>
 
-      <div class="delivery">${ICONS.truck}<div><b>Pídelo hoy y recíbelo entre el ${dShort(from)} y el ${dShort(to)}</b><span class="small muted">Envío gratis con número de seguimiento</span></div></div>
+      <div class="delivery">${ICONS.truck}<div><b>Order today, get it between ${dShort(from)} and ${dShort(to)}</b><span class="small muted">Free shipping with tracking number</span></div></div>
 
       <div class="pay-row">
-        <span class="small muted">${ICONS.lock} Pago seguro con</span>
+        <span class="small muted">${ICONS.lock} Secure checkout with</span>
         <span class="paym">VISA</span><span class="paym">Mastercard</span><span class="paym">Apple Pay</span><span class="paym">Google Pay</span>
       </div>
 
@@ -150,15 +150,15 @@ function productPage(p) {
 
   <section class="trust-strip">
     <div class="wrap trust-grid">
-      <div>${ICONS.truck}<b>Envío gratis</b><span>Con seguimiento</span></div>
-      <div>${ICONS.ret}<b>30 días</b><span>Para devolverlo</span></div>
-      <div>${ICONS.lock}<b>Pago seguro</b><span>Procesado por Stripe</span></div>
+      <div>${ICONS.truck}<b>Free shipping</b><span>With tracking</span></div>
+      <div>${ICONS.ret}<b>30 days</b><span>To return it</span></div>
+      <div>${ICONS.lock}<b>Secure payment</b><span>Processed by Stripe</span></div>
     </div>
   </section>
 
   ${p.highlights ? `
   <section class="wrap section">
-    <h2 class="section-title">Por qué te va a encantar</h2>
+    <h2 class="section-title">Why you'll love it</h2>
     <div class="highlights">${p.highlights.map(h => `
       <div class="hl"><div class="hl-icon">${ICONS[h.icon] || ICONS.check}</div><h3>${h.title}</h3><p>${h.text}</p></div>`).join("")}
     </div>
@@ -168,34 +168,34 @@ function productPage(p) {
   <section class="wrap section split">
     <div class="split-imgs">${p.variants.slice(0, 2).map(v => `<figure><img src="${v.image}" alt="${p.name} ${v.name}" loading="lazy"><figcaption>${v.name}</figcaption></figure>`).join("")}</div>
     <div class="split-text">
-      <h2 class="section-title left">Un básico para cualquier look</h2>
-      <p class="muted">En ${p.variants.map(v => v.name.toLowerCase()).join(" y ")}: elige el tono que mejor va con tu ropa para que no se note ni con prendas claras ni oscuras.</p>
-      <button class="btn btn-outline" onclick="scrollToBuy()">Elegir mi talla</button>
+      <h2 class="section-title left">An essential for every outfit</h2>
+      <p class="muted">In ${p.variants.map(v => v.name.toLowerCase()).join(" and ")}: pick the shade that matches your outfit so it stays invisible under light or dark clothes.</p>
+      <button class="btn btn-outline" onclick="scrollToBuy()">Choose my size</button>
     </div>
   </section>` : ""}
 
   <section class="guarantee">
     <div class="wrap guarantee-in">
-      <div class="seal">30<small>días</small></div>
-      <div><h2>Pruébalo sin riesgo</h2><p>Si no te convence o la talla no es la tuya, tienes 30 días desde que lo recibes para devolverlo. Sin complicaciones.</p></div>
+      <div class="seal">30<small>days</small></div>
+      <div><h2>Try it risk-free</h2><p>Not convinced, or the size isn't right? You have 30 days from delivery to return it. No hassle.</p></div>
     </div>
   </section>
 
   ${p.faq ? `
   <section class="wrap section narrow" id="faq">
-    <h2 class="section-title">Preguntas frecuentes</h2>
+    <h2 class="section-title">Frequently asked questions</h2>
     <div class="accordion">${p.faq.map(f => `<details><summary>${f.q}${ICONS.plus}</summary><p>${f.a}</p></details>`).join("")}</div>
   </section>` : ""}
 
   <section class="wrap section final-cta">
     <h2 class="section-title">${p.name}</h2>
-    <p class="muted">${fmt(p.price)} ${p.compareAt ? `<s>${fmt(p.compareAt)}</s>` : ""} · Envío gratis</p>
-    <button class="btn btn-dark" onclick="scrollToBuy()">Lo quiero</button>
+    <p class="muted">${fmt(p.price)} ${p.compareAt ? `<s>${fmt(p.compareAt)}</s>` : ""} · Free shipping</p>
+    <button class="btn btn-dark" onclick="scrollToBuy()">I want it</button>
   </section>`;
 }
 
 function grid(list) {
-  return `<section class="wrap section"><h1 class="section-title">Nuestros productos</h1><div class="grid">${list.map(p => `
+  return `<section class="wrap section"><h1 class="section-title">Our products</h1><div class="grid">${list.map(p => `
     <a class="card" href="/${p.id}"><div class="card-img"><img src="${p.images[0]}" alt="${p.name}">${p.compareAt ? `<span class="sale-badge">-${Math.round(100 - p.price / p.compareAt * 100)}%</span>` : ""}</div>
     <h3>${p.name}</h3><p><b>${fmt(p.price)}</b> ${p.compareAt ? `<s class="muted">${fmt(p.compareAt)}</s>` : ""}</p></a>`).join("")}</div></section>`;
 }
@@ -206,11 +206,11 @@ function refresh() {
   document.getElementById("btn-total").textContent = fmt(u * S.qty);
   document.querySelectorAll(".bundle-price").forEach(el => {
     const q = +el.dataset.qty, up = unitPrice(q);
-    el.innerHTML = `<b>${fmt(up * q)}</b>${q > 1 ? `<small>${fmt(up)}/ud</small>` : ""}`;
+    el.innerHTML = `<b>${fmt(up * q)}</b>${q > 1 ? `<small>${fmt(up)} each</small>` : ""}`;
   });
   document.getElementById("sticky-price").textContent = fmt(u * S.qty);
   const it0 = S.items[0];
-  document.getElementById("sticky-name").textContent = S.qty > 1 ? `Pack de ${S.qty}` : ([it0.variant && it0.variant.name, it0.size && "Talla " + it0.size].filter(Boolean).join(" · ") || P.name);
+  document.getElementById("sticky-name").textContent = S.qty > 1 ? `Bundle of ${S.qty}` : ([it0.variant && it0.variant.name, it0.size && "Size " + it0.size].filter(Boolean).join(" · ") || P.name);
   document.getElementById("sticky-img").src = (it0.variant && it0.variant.image) || P.images[0];
 }
 
@@ -226,7 +226,7 @@ function renderUnits() {
   box.className = multi ? "units multi" : "units";
   box.innerHTML = S.items.map((it, i) => `
     <div class="unit${S.showErr && P.sizes && !it.size ? " missing" : ""}">
-      ${multi ? `<div class="unit-head"><span class="pack-n">${i + 1}</span><b>Unidad ${i + 1}</b><span class="unit-sum">${[it.variant && it.variant.name, it.size && "Talla " + it.size].filter(Boolean).join(" · ")}</span></div>` : ""}
+      ${multi ? `<div class="unit-head"><span class="pack-n">${i + 1}</span><b>Item ${i + 1}</b><span class="unit-sum">${[it.variant && it.variant.name, it.size && "Size " + it.size].filter(Boolean).join(" · ")}</span></div>` : ""}
       ${P.variants ? `
       <div class="unit-line">
         ${multi ? "" : `<div class="opt-sub">Color: <b>${it.variant.name}</b></div>`}
@@ -234,9 +234,9 @@ function renderUnits() {
       </div>` : ""}
       ${P.sizes ? `
       <div class="unit-line">
-        ${multi ? "" : `<div class="opt-sub">Talla: <b>${it.size || "elige tu talla"}</b></div>`}
+        ${multi ? "" : `<div class="opt-sub">Size: <b>${it.size || "choose your size"}</b></div>`}
         <div class="sizes${multi ? " sm" : ""}">${P.sizes.map(z => `<button type="button" class="size${it.size === z ? " on" : ""}" onclick="setItem(${i},'size','${z}')">${z}</button>`).join("")}</div>
-        ${S.showErr && !it.size ? '<p class="err-msg">Elige una talla</p>' : ""}
+        ${S.showErr && !it.size ? '<p class="err-msg">Choose a size</p>' : ""}
       </div>` : ""}
     </div>`).join("");
 }
@@ -267,7 +267,7 @@ function step(d) {
 function scrollToBuy() { document.getElementById("buybox").scrollIntoView({ behavior: "smooth", block: "start" }); }
 function openSizes() {
   const g = P.sizeGuide;
-  document.getElementById("size-content").innerHTML = `<h3>Guía de tallas</h3>
+  document.getElementById("size-content").innerHTML = `<h3>Size guide</h3>
     <table><thead><tr>${g.headers.map(h => `<th>${h}</th>`).join("")}</tr></thead>
     <tbody>${g.rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>
     <p class="small muted">${g.tip || ""}</p>`;
@@ -278,12 +278,12 @@ async function buy(btn) {
   if (P.sizes && S.items.some(it => !it.size)) {
     S.showErr = true; renderUnits();
     const m = document.getElementById("buy-err");
-    m.textContent = S.items.length > 1 ? "Elige la talla de cada unidad" : "Elige tu talla para continuar"; m.hidden = false;
+    m.textContent = S.items.length > 1 ? "Choose a size for each item" : "Choose your size to continue"; m.hidden = false;
     const first = document.querySelector(".unit.missing");
     if (first) { first.scrollIntoView({ behavior: "smooth", block: "center" }); first.classList.remove("shake"); void first.offsetWidth; first.classList.add("shake"); }
     return;
   }
-  const label = btn.innerHTML; btn.disabled = true; btn.textContent = "Abriendo pago seguro…";
+  const label = btn.innerHTML; btn.disabled = true; btn.textContent = "Opening secure checkout…";
   try {
     const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ productId: P.id, quantity: S.qty,
@@ -294,7 +294,7 @@ async function buy(btn) {
   } catch (e) {
     btn.disabled = false; btn.innerHTML = label;
     const m = document.getElementById("buy-err");
-    m.textContent = "No se pudo abrir el pago: " + e.message; m.hidden = false;
+    m.textContent = "Could not open checkout: " + e.message; m.hidden = false;
   }
 }
 
