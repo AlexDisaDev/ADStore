@@ -66,7 +66,7 @@ const ICONS = {
 };
 const fmt = c => new Intl.NumberFormat("es-ES", { style: "currency", currency: (window.CFG && CFG.currency) || "eur" }).format(c / 100);
 const qs = new URLSearchParams(location.search);
-const S = { variant: null, size: null, qty: 1 };
+const S = { variant: null, size: null, qty: 1, extra: [] }; // extra = unidades 2..n del pack
 let P = null;
 
 function addBusinessDays(d, n) { d = new Date(d); while (n > 0) { d.setDate(d.getDate() + 1); if (d.getDay() % 6) n--; } return d; }
@@ -135,7 +135,7 @@ function productPage(p) {
             <span class="bundle-price" data-qty="${b.qty}"></span>
           </label>`).join("")}
         </div>
-        ${p.sizes ? '<p class="small muted">Los packs van en el mismo color y talla.</p>' : ""}
+        <div id="pack-items"></div>
       </div>` : `
       <div class="opt"><div class="opt-label">Cantidad</div>
         <div class="stepper"><button type="button" onclick="step(-1)">−</button><span id="qtyv">1</span><button type="button" onclick="step(1)">+</button></div></div>`}
@@ -216,7 +216,7 @@ function refresh() {
     el.innerHTML = `<b>${fmt(up * q)}</b>${q > 1 ? `<small>${fmt(up)}/ud</small>` : ""}`;
   });
   document.getElementById("sticky-price").textContent = fmt(u * S.qty);
-  document.getElementById("sticky-name").textContent = [S.variant && S.variant.name, S.size && "Talla " + S.size].filter(Boolean).join(" · ") || P.name;
+  document.getElementById("sticky-name").textContent = S.qty > 1 ? `Pack de ${S.qty}` : ([S.variant && S.variant.name, S.size && "Talla " + S.size].filter(Boolean).join(" · ") || P.name);
   document.getElementById("sticky-img").src = (S.variant && S.variant.image) || P.images[0];
 }
 
@@ -229,6 +229,7 @@ function pickVariant(id, el) {
   S.variant = P.variants.find(v => v.id === id);
   document.querySelectorAll(".swatch").forEach(b => b.classList.remove("on")); el.classList.add("on");
   document.getElementById("vname").textContent = S.variant.name;
+  renderPack();
   if (S.variant.image) {
     const idx = [...document.querySelectorAll("#slides img")].findIndex(im => im.getAttribute("src") === S.variant.image);
     if (idx >= 0) goSlide(idx);
@@ -241,12 +242,34 @@ function pickSize(z, el) {
   document.getElementById("sname").textContent = z;
   document.getElementById("size-err").hidden = true;
   document.getElementById("sizes").classList.remove("shake");
+  renderPack();
   refresh();
 }
 function pickQty(q, el) {
   S.qty = q;
+  while (S.extra.length < q - 1) S.extra.push({ variant: S.variant, size: null });
+  S.extra.length = q - 1;
+  renderPack();
   document.querySelectorAll(".bundle").forEach(b => b.classList.remove("on")); el.closest(".bundle").classList.add("on");
   refresh();
+}
+function renderPack() {
+  const box = document.getElementById("pack-items");
+  if (!box) return;
+  if (S.qty < 2 || (!P.variants && !P.sizes)) { box.innerHTML = ""; return; }
+  box.innerHTML = `<div class="pack"><div class="pack-head">Elige color y talla de cada unidad</div>
+    <div class="pack-row"><span class="pack-n">1</span><span class="pack-sum">${[S.variant && S.variant.name, S.size ? "Talla " + S.size : "<em>elige talla arriba</em>"].filter(Boolean).join(" · ")}</span></div>
+    ${S.extra.map((it, i) => `
+    <div class="pack-row">
+      <span class="pack-n">${i + 2}</span>
+      ${P.variants ? `<div class="mini-sw">${P.variants.map(v => `<button type="button" class="swatch sm${it.variant && it.variant.id === v.id ? " on" : ""}" style="--c:${v.swatch}" aria-label="${v.name}" onclick="pickExtra(${i},'variant','${v.id}')"></button>`).join("")}</div>` : ""}
+      ${P.sizes ? `<select class="mini-size${it.size ? "" : " empty"}" onchange="pickExtra(${i},'size',this.value)"><option value="">Talla</option>${P.sizes.map(z => `<option ${it.size === z ? "selected" : ""}>${z}</option>`).join("")}</select>` : ""}
+    </div>`).join("")}</div>`;
+}
+function pickExtra(i, k, val) {
+  S.extra[i][k] = k === "variant" ? P.variants.find(v => v.id === val) : val;
+  document.getElementById("buy-err").hidden = true;
+  renderPack(); refresh();
 }
 function step(d) { S.qty = Math.min(5, Math.max(1, S.qty + d)); document.getElementById("qtyv").textContent = S.qty; refresh(); }
 function scrollToBuy() { document.getElementById("buybox").scrollIntoView({ behavior: "smooth", block: "start" }); }
@@ -265,10 +288,17 @@ async function buy(btn) {
     const s = document.getElementById("sizes"); s.classList.remove("shake"); void s.offsetWidth; s.classList.add("shake");
     document.getElementById("size-err").hidden = false; return;
   }
+  if (P.sizes && S.extra.some(it => !it.size)) {
+    const m = document.getElementById("buy-err"); m.textContent = "Elige la talla de cada unidad del pack"; m.hidden = false;
+    document.getElementById("pack-items").scrollIntoView({ behavior: "smooth", block: "center" });
+    document.querySelectorAll(".mini-size.empty").forEach(x => { x.classList.remove("shake"); void x.offsetWidth; x.classList.add("shake"); });
+    return;
+  }
   const label = btn.innerHTML; btn.disabled = true; btn.textContent = "Abriendo pago seguro…";
   try {
     const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId: P.id, variantId: S.variant && S.variant.id, size: S.size, quantity: S.qty }) });
+      body: JSON.stringify({ productId: P.id, quantity: S.qty,
+        items: [{ variantId: S.variant && S.variant.id, size: S.size }, ...S.extra.map(it => ({ variantId: it.variant && it.variant.id, size: it.size }))] }) });
     const d = await r.json();
     if (d.url) { location.href = d.url; return; }
     throw new Error(d.error || "Error");

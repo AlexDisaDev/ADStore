@@ -190,3 +190,17 @@ main.center{text-align:center}
 .thanks .btn{margin-top:16px}
 .legal{max-width:720px;margin:0 auto;padding:32px 16px}
 .legal h1,.legal h2{font-family:var(--serif);font-weight:500}
+
+/* pack: color y talla por unidad */
+.pack{margin-top:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:6px 14px}
+.pack-head{font-size:13px;font-weight:600;padding:8px 0 4px}
+.pack-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.pack-head+.pack-row{border-top:0}
+.pack-n{width:26px;height:26px;border-radius:50%;background:var(--blush);display:grid;place-items:center;font-size:13px;font-weight:700;flex:none}
+.pack-sum{font-size:14px;color:var(--muted)}
+.pack-sum em{color:var(--sale);font-style:normal}
+.mini-sw{display:flex;gap:8px}
+.swatch.sm{width:30px;height:30px;border-width:2px}
+.mini-size{margin-left:auto;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font:inherit;font-size:14px;background:var(--surface);color:var(--ink)}
+.mini-size.empty{border-color:var(--sale)}
+.product>*{min-width:0}
