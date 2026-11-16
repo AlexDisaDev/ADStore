@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pretty Comite</title>
 <meta name="description" content="Free worldwide tracked shipping. 100% secure checkout. 30-day returns.">
-<meta name="theme-color" content="#fbf8f5">
+<meta name="theme-color" content="#6200c9">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -88,7 +88,7 @@ function gallery(p) {
       ${p.compareAt ? `<span class="sale-badge">-${Math.round(100 - p.price / p.compareAt * 100)}%</span>` : ""}
       <div class="slides" id="slides">${imgs.map((src, i) => `<img src="${src}" alt="${p.name}" ${i ? 'loading="lazy"' : ""} data-i="${i}">`).join("")}</div>
     </div>
-    ${imgs.length > 1 ? `<div class="thumbs">${imgs.map((src, i) => `<button class="thumb${i ? "" : " on"}" data-src="${src}" onclick="goSlide(${i})"><img src="${src}" alt=""></button>`).join("")}</div>` : ""}
+    ${imgs.length > 1 ? `<div class="thumbs">${imgs.map((src, i) => `<button aria-label="View image ${i + 1}" class="thumb${i ? "" : " on"}" data-src="${src}" onclick="goSlide(${i})"><img src="${src}" alt=""></button>`).join("")}</div>` : ""}
   </div>`;
 }
 
