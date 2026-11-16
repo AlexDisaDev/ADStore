@@ -27,7 +27,8 @@ svg{width:20px;height:20px;flex:none}
 .site-header{background:var(--bg);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;backdrop-filter:saturate(1.4) blur(8px)}
 .header-row{display:flex;align-items:center;justify-content:space-between;height:60px}
 .logo{font-family:var(--serif);font-weight:600;font-size:24px;letter-spacing:-.01em;text-decoration:none;display:flex;align-items:center;gap:8px}
-.logo-mark{height:28px;width:auto;display:block}
+.logo-mark{height:30px;width:auto;display:block}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .header-links a{font-size:14px;color:var(--muted);text-decoration:none}
 
 /* producto */
