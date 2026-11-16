@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/styles.css">
+<link rel="icon" type="image/svg+xml" href="/img/logo-mark.svg">
 <base href="/">
 </head>
 <body>
@@ -19,7 +20,7 @@
 
 <header class="site-header">
   <div class="wrap header-row">
-    <a href="/" class="logo" id="logo">Pretty Comite</a>
+    <a href="/" class="logo" id="logo"><img src="/img/logo.svg" alt="" class="logo-mark"><span id="logo-label">Pretty Comite</span></a>
     <nav class="header-links"><a href="#faq">Help</a></nav>
   </div>
 </header>
@@ -29,7 +30,7 @@
 <footer class="site-footer">
   <div class="wrap footer-grid">
     <div>
-      <div class="logo" id="logo-foot">Pretty Comite</div>
+      <div class="logo" id="logo-foot"><img src="/img/logo.svg" alt="" class="logo-mark"><span id="logo-foot-label">Pretty Comite</span></div>
       <p class="muted small">Payments processed by Stripe. We never see your card details.</p>
     </div>
     <div class="footer-links">
@@ -301,7 +302,7 @@ async function buy(btn) {
 fetch("/api/products").then(r => r.json()).then(cfg => {
   window.CFG = cfg;
   document.getElementById("year").textContent = new Date().getFullYear();
-  ["logo", "logo-foot"].forEach(id => document.getElementById(id).textContent = cfg.storeName);
+  ["logo-label", "logo-foot-label"].forEach(id => document.getElementById(id).textContent = cfg.storeName);
   const slug = location.pathname.replace(/^\/|\/$|\.html$/g, "") || qs.get("p");
   const list = cfg.products;
   P = list.find(p => p.id === slug) || (list.length === 1 ? list[0] : null);
