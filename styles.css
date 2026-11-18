@@ -1,6 +1,6 @@
 :root{
-  --bg:#fbf8f5; --surface:#fff; --ink:#1c1917; --muted:#78716c; --line:#e9e2db;
-  --blush:#f3e6dd; --blush-2:#ead6c8; --sale:#b4532a; --ok:#3f6b4e;
+  --bg:#f6f0e7; --surface:#fff; --ink:#4a1a26; --muted:#8a7068; --line:#e8ddd3;
+  --blush:#f2e1df; --blush-2:#e3bfc0; --sale:#b4532a; --ok:#3f6b4e;
   --radius:14px; --serif:"Fraunces",Georgia,serif; --sans:"Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
 }
 *{box-sizing:border-box}
